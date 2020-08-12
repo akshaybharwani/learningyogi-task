@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using DG.Tweening;
 using UnityEngine;
-
+    
 [RequireComponent(typeof(Animator))]
 public class PlayerMovementController : MonoBehaviour
 {
@@ -20,14 +20,23 @@ public class PlayerMovementController : MonoBehaviour
     // Reference to the Player's Animator Controller to change Player's animation States
     private Animator _playerAnimatorController;
 
+    // Reference to store a GameManager instance
+    private GameManager _gameManagerInstance;
+
+    private bool _hasJumpBeenPressed;
+
     #endregion
-    
+
+    #region Unity Methods
+
     // Start is called before the first frame update
     void Start()
     {
         // Set the Player's Animator Controller reference 
         _playerAnimatorController = GetComponent<Animator>();
         
+        // Set the GameManager
+        _gameManagerInstance = FindObjectOfType<GameManager>();
     }
 
     // Update is called once per frame
@@ -36,25 +45,20 @@ public class PlayerMovementController : MonoBehaviour
         // Condition to Detect If the User has touched the Screen
         if (Input.touchCount > 0 || Input.GetMouseButtonDown(0))
         {
-            // If the User is touching the Screen, jump the Player
-            StartCoroutine(MovePlayerOnYAxis());
-            
-            _playerAnimatorController.SetBool("isJumping", true);
-            
-            // Assign the touch to a local variable to be used later
-            var touch = Input.GetTouch(0);
-            
-            if (touch.phase == TouchPhase.Began)
+            if (!_hasJumpBeenPressed)
             {
+                _hasJumpBeenPressed = true;
+                // If the User is touching the Screen, jump the Player
+                StartCoroutine(MovePlayerOnYAxis());
                 
-            }
-
-            if (touch.phase == TouchPhase.Ended)
-            {
-                
+                _playerAnimatorController.SetBool("isJumping", true);
             }
         }
     }
+
+    #endregion
+    
+    #region Public Methods
 
     /// <summary>
     /// Function which changes Jumping Bool on Player Animator
@@ -64,6 +68,22 @@ public class PlayerMovementController : MonoBehaviour
         // Set the Bool as false and make the Player stop jumping
         _playerAnimatorController.SetBool("isJumping", false);
     }
+    
+    /// <summary>
+    /// Function which plays the Death animation and ends the Game
+    /// </summary>
+    public void KillPlayer()
+    {
+        // Play the Player's Death Animation
+        _playerAnimatorController.SetTrigger("Dead");
+        
+        // End the Game
+        _gameManagerInstance.EndGame();
+    }
+
+    #endregion
+
+    #region Private Methods
 
     /// <summary>
     /// Function which moves the Player based on boolean
@@ -79,6 +99,9 @@ public class PlayerMovementController : MonoBehaviour
         // Play the Jumping down Animation, which will play after Jumping up
         transform.DOMoveY(transform.position.y - _jumpValue, 
             _speedValue);
-        
+
+        _hasJumpBeenPressed = false;
     }
+
+    #endregion
 }
